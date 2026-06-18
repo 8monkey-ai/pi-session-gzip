@@ -42,12 +42,6 @@ Filter to just this extension in `~/.pi/agent/settings.json`:
 }
 ```
 
-## Flags
-
-| Flag | Default | Description |
-|---|---|---|
-| `--session-gzip-keep-plain` | `false` | Keep `session.jsonl` alongside `session.jsonl.gz` instead of deleting the plain file after compressing. |
-
 ## Command
 
 | Command | Description |

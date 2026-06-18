@@ -2,14 +2,7 @@ import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-c
 import { gunzipFile, gzipFile } from "./gzip.ts";
 import { listCompressedSessions, resolveGzPath } from "./session-paths.ts";
 
-const KEEP_PLAIN_FLAG = "session-gzip-keep-plain";
-
 export default function (pi: ExtensionAPI) {
-	pi.registerFlag(KEEP_PLAIN_FLAG, {
-		description: "Keep the plain .jsonl alongside the .jsonl.gz instead of deleting it",
-		type: "boolean",
-		default: false,
-	});
 	pi.on("session_shutdown", async (event, ctx) => {
 		// Only "quit" means pi is done with the file. reload/new/resume/fork
 		// reopen or switch files, so compressing then could remove a file pi
@@ -19,7 +12,7 @@ export default function (pi: ExtensionAPI) {
 		const file = ctx.sessionManager.getSessionFile();
 		if (!file) return;
 
-		const gz = gzipFile(file, { keepPlain: pi.getFlag(KEEP_PLAIN_FLAG) === true });
+		const gz = gzipFile(file);
 		if (gz && ctx.hasUI) {
 			ctx.ui.notify(`Compressed session to ${gz.split("/").pop()}.`, "info");
 		}

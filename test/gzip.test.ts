@@ -28,15 +28,6 @@ test("round trip: gzip deletes the plain file, gunzip restores it byte-identical
 	});
 });
 
-test("keepPlain keeps both files", () => {
-	withTmpDir((dir) => {
-		const jsonl = join(dir, "s.jsonl");
-		writeFileSync(jsonl, SAMPLE);
-		gzipFile(jsonl, { keepPlain: true });
-		assert.ok(existsSync(jsonl) && existsSync(jsonl + GZ_SUFFIX));
-	});
-});
-
 test("empty session is skipped, no gz created", () => {
 	withTmpDir((dir) => {
 		const jsonl = join(dir, "empty.jsonl");

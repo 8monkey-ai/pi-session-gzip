@@ -30,7 +30,7 @@ function writeFileDurable(targetPath: string, data: Buffer): void {
 // is durably in place before the plain file is unlinked, so a crash leaves at
 // least one intact copy. Returns the .gz path, or null when there is nothing to
 // compress (a session quit before it was ever persisted, or an empty file).
-export function gzipFile(jsonlPath: string, opts: { keepPlain?: boolean } = {}): string | null {
+export function gzipFile(jsonlPath: string): string | null {
 	if (!existsSync(jsonlPath)) return null;
 
 	const plain = readFileSync(jsonlPath);
@@ -39,7 +39,7 @@ export function gzipFile(jsonlPath: string, opts: { keepPlain?: boolean } = {}):
 	const gzPath = `${jsonlPath}${GZ_SUFFIX}`;
 	writeFileDurable(gzPath, gzipSync(plain));
 
-	if (!opts.keepPlain) rmSync(jsonlPath, { force: true });
+	rmSync(jsonlPath, { force: true });
 	return gzPath;
 }
 
