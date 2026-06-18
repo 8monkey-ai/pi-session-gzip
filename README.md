@@ -1,6 +1,6 @@
 # pi-session-gzip
 
-Gzip Pi session files at rest. When a session closes it's compressed to a `.jsonl.gz` sidecar and the plain file is removed; `/resume-compressed` restores and reopens it on demand. Plain JSONL stays Pi's working format — nothing changes during a live session.
+Gzip Pi session files at rest. When a session closes it's compressed to a `.jsonl.gz` file alongside the original and the plain file is removed; `/resume-compressed` restores and reopens it on demand. Plain JSONL stays Pi's working format — nothing changes during a live session.
 
 Built for anyone whose `~/.pi/agent/sessions/` has grown large and wants closed sessions to sit compressed without losing the ability to reopen them.
 

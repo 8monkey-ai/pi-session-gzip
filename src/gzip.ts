@@ -26,7 +26,7 @@ function writeFileDurable(targetPath: string, data: Buffer): void {
 	renameSync(tmpPath, targetPath);
 }
 
-// Compress `jsonlPath` to its `.gz` sidecar and remove the plain file. The .gz
+// Compress `jsonlPath` to a `.gz` file beside it and remove the plain file. The .gz
 // is durably in place before the plain file is unlinked, so a crash leaves at
 // least one intact copy. Returns the .gz path, or null when there is nothing to
 // compress (a session quit before it was ever persisted, or an empty file).
