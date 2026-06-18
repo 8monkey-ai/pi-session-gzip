@@ -17,18 +17,6 @@ Zero runtime dependencies. Pi loads the TypeScript directly, so there's no build
 pi install npm:@8monkey/pi-session-gzip
 ```
 
-That's it — the extension loads on the next `pi` launch. Update with `pi update`.
-
-For development against a local clone, point pi at the file directly in `~/.pi/agent/settings.json`:
-
-```json
-{
-  "extensions": [
-    "~/pi-session-gzip/src/index.ts"
-  ]
-}
-```
-
 ## Command
 
 | Command | Description |
