@@ -1,0 +1,33 @@
+{
+  "name": "pi-session-gzip",
+  "version": "0.1.0",
+  "description": "Pi extension that gzips session files on shutdown and restores them on demand.",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "src",
+    "README.md",
+    "LICENSE"
+  ],
+  "pi": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "typescript": "^5"
+  },
+  "keywords": [
+    "pi",
+    "pi-extension",
+    "gzip",
+    "sessions"
+  ]
+}
