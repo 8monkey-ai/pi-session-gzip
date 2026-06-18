@@ -13,26 +13,13 @@ Zero runtime dependencies. Pi loads the TypeScript directly, so there's no build
 
 ## Install
 
-### Pi package manager
-
 ```bash
-pi install git:github.com/<you>/pi-session-gzip
+pi install npm:@8monkey/pi-session-gzip
 ```
 
-Filter to just this extension in `~/.pi/agent/settings.json`:
+That's it — the extension loads on the next `pi` launch. Update with `pi update`.
 
-```json
-{
-  "packages": [
-    {
-      "source": "git:github.com/<you>/pi-session-gzip",
-      "extensions": ["src/index.ts"]
-    }
-  ]
-}
-```
-
-### Local clone
+For development against a local clone, point pi at the file directly in `~/.pi/agent/settings.json`:
 
 ```json
 {
