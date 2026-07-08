@@ -34,8 +34,8 @@
     "typescript": "^5"
   },
   "keywords": [
+    "pi-package",
     "pi",
-    "pi-extension",
     "gzip",
     "sessions"
   ]
