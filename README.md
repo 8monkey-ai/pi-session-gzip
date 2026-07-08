@@ -28,7 +28,7 @@ pi install npm:@8monkey/pi-session-gzip
 - Compresses on quit only; live sessions, reloads, and switches are left untouched.
 - Restoring is safe to repeat — running compress or restore twice is a no-op.
 - Ephemeral (`--no-session`) and empty sessions are skipped.
-- The `.gz` sits next to the original; the sessions layout is never reorganized.
+- The `.gz` replaces the original at the same path (`session.jsonl` → `session.jsonl.gz`); the sessions layout is never reorganized.
 
 ## Development
 
