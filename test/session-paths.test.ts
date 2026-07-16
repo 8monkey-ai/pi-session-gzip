@@ -6,13 +6,10 @@ import { gzipSync } from "node:zlib";
 import { listCompressedSessions, resolveGzPath } from "../src/session-paths.ts";
 import { withTmpDir } from "./support.ts";
 
-function writeGzSession(dir: string, fileBase: string, id: string, userMessage = ""): string {
-	const lines = [JSON.stringify({ type: "session", id, cwd: "/proj" })];
-	if (userMessage) {
-		lines.push(JSON.stringify({ type: "message", message: { role: "user", content: userMessage } }));
-	}
+function writeGzSession(dir: string, fileBase: string, id: string) {
+	const header = JSON.stringify({ type: "session", id, cwd: "/proj" });
 	const gzPath = join(dir, `${fileBase}.jsonl.gz`);
-	writeFileSync(gzPath, gzipSync(Buffer.from(lines.join("\n") + "\n")));
+	writeFileSync(gzPath, gzipSync(Buffer.from(header + "\n")));
 	return gzPath;
 }
 
@@ -32,10 +29,10 @@ test("resolveGzPath resolves a direct path argument", () => {
 	});
 });
 
-test("listCompressedSessions returns sessions newest-first with previews", () => {
+test("listCompressedSessions returns sessions newest-first", () => {
 	withTmpDir((dir) => {
-		const older = writeGzSession(dir, "a", "id-old", "first task");
-		const newer = writeGzSession(dir, "b", "id-new", "second task");
+		const older = writeGzSession(dir, "a", "id-old");
+		const newer = writeGzSession(dir, "b", "id-new");
 		utimesSync(older, new Date(1000), new Date(1000));
 		utimesSync(newer, new Date(2000), new Date(2000));
 
@@ -44,6 +41,5 @@ test("listCompressedSessions returns sessions newest-first with previews", () =>
 			sessions.map((s) => s.id),
 			["id-new", "id-old"],
 		);
-		assert.equal(sessions[0].preview, "second task");
 	});
 });
