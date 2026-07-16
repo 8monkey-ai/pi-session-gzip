@@ -1,5 +1,6 @@
+import { existsSync } from "node:fs";
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
-import { gunzipFile, gzipFile } from "./gzip.ts";
+import { GZ_SUFFIX, gunzipFile, gzipFile } from "./gzip.ts";
 import { listCompressedSessions, resolveGzPath } from "./session-paths.ts";
 
 export default function (pi: ExtensionAPI) {
@@ -23,26 +24,29 @@ export default function (pi: ExtensionAPI) {
 		handler: async (args, ctx) => {
 			const sessionDir = ctx.sessionManager.getSessionDir();
 			const arg = args.trim();
-			const gzPath = arg ? resolveGzPath(arg, sessionDir) : (await pickCompressedSession(ctx, sessionDir))?.gzPath;
-			if (gzPath) await decompressAndResume(gzPath, ctx);
+			if (arg) {
+				const gzPath = resolveGzPath(arg, sessionDir);
+				if (gzPath) await decompressAndResume(gzPath, ctx);
+				else ctx.ui.notify(`No compressed session matching "${arg}".`, "info");
+				return;
+			}
+
+			const gzPath = findRestorableGz(ctx, sessionDir);
+			if (!gzPath) {
+				ctx.ui.notify("No compressed session to restore.", "info");
+				return;
+			}
+			await decompressAndResume(gzPath, ctx);
 		},
 	});
 }
 
-async function pickCompressedSession(ctx: ExtensionCommandContext, sessionDir: string) {
-	const sessions = listCompressedSessions(sessionDir);
-	if (sessions.length === 0) {
-		ctx.ui.notify("No compressed sessions in this project.", "info");
-		return undefined;
-	}
-
-	const labels = sessions.map((s) => {
-		const when = new Date(s.modified).toISOString().slice(0, 16).replace("T", " ");
-		const preview = s.preview.replace(/\s+/g, " ").slice(0, 60) || "(no messages)";
-		return `${when}  ${preview}`;
-	});
-	const choice = await ctx.ui.select("Resume compressed session", labels);
-	return choice === undefined ? undefined : sessions[labels.indexOf(choice)];
+// The current session's own .gz if it exists, else the newest .gz in the project.
+function findRestorableGz(ctx: ExtensionCommandContext, sessionDir: string) {
+	const file = ctx.sessionManager.getSessionFile();
+	const exact = file ? `${file}${GZ_SUFFIX}` : undefined;
+	if (exact && existsSync(exact)) return exact;
+	return listCompressedSessions(sessionDir)[0]?.gzPath;
 }
 
 async function decompressAndResume(gzPath: string, ctx: ExtensionCommandContext) {
@@ -54,6 +58,12 @@ async function decompressAndResume(gzPath: string, ctx: ExtensionCommandContext)
 		return;
 	}
 
-	const { cancelled } = await ctx.switchSession(restored);
+	// After a successful switch the outer ctx is stale; notify via withSession's
+	// fresh ctx. On cancel no replacement happened, so the outer ctx is still valid.
+	const { cancelled } = await ctx.switchSession(restored, {
+		withSession: async (newCtx) => {
+			newCtx.ui.notify(`Restored ${restored.split("/").pop()}.`, "info");
+		},
+	});
 	if (cancelled) ctx.ui.notify("Resume cancelled.", "info");
 }

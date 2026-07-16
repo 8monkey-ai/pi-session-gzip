@@ -3,17 +3,6 @@ import { isAbsolute, join, resolve } from "node:path";
 import { gunzipSync } from "node:zlib";
 import { GZ_SUFFIX } from "./gzip.ts";
 
-function extractText(content: unknown) {
-	if (typeof content === "string") return content;
-	if (Array.isArray(content)) {
-		return content
-			.map((part) => (part && typeof part === "object" && "text" in part ? String((part as { text: unknown }).text) : ""))
-			.join(" ")
-			.trim();
-	}
-	return "";
-}
-
 function looksLikePath(arg: string) {
 	return arg.includes("/") || arg.includes("\\") || arg.endsWith(".jsonl") || arg.endsWith(".jsonl.gz");
 }
@@ -35,18 +24,7 @@ function toInfo(gzPath: string) {
 		const lines = gunzipSync(readFileSync(gzPath)).toString("utf8").split("\n");
 		const header = JSON.parse(lines[0]) as { type?: string; id?: unknown };
 		if (header.type !== "session" || typeof header.id !== "string") return undefined;
-
-		let preview = "";
-		for (let i = 1; i < lines.length && !preview; i++) {
-			if (!lines[i]) continue;
-			try {
-				const entry = JSON.parse(lines[i]) as { type?: string; message?: { role?: string; content?: unknown } };
-				if (entry.type === "message" && entry.message?.role === "user") preview = extractText(entry.message.content);
-			} catch {
-				// Skip malformed line.
-			}
-		}
-		return { gzPath, id: header.id, preview, modified: statSync(gzPath).mtimeMs };
+		return { gzPath, id: header.id, modified: statSync(gzPath).mtimeMs };
 	} catch {
 		return undefined;
 	}

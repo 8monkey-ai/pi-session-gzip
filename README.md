@@ -7,7 +7,7 @@ Built for anyone whose `~/.pi/agent/sessions/` has grown large and wants closed 
 ## How it works
 
 - **Compress on shutdown.** Quitting Pi compresses the closed session's `session.jsonl` to `session.jsonl.gz` and removes the plain file.
-- **Restore on demand.** Run `/resume-compressed` to pick from this project's compressed sessions (newest first); your choice is decompressed and reopened in place. Pass an id or path to skip the picker.
+- **Restore on demand.** Run `/resume-compressed` to decompress and reopen the current session's `.gz` (falling back to this project's newest compressed session). Pass an id or path to restore a specific one.
 
 Zero runtime dependencies. Pi loads the TypeScript directly, so there's no build step. Runs under Node or Bun.
 
@@ -21,7 +21,7 @@ pi install npm:@8monkey/pi-session-gzip
 
 | Command | Description |
 |---|---|
-| `/resume-compressed [id\|path]` | Restore a compressed session and reopen it. With no argument, shows a picker of this project's compressed sessions (newest first). Accepts a session id (exact or prefix) or a file path. |
+| `/resume-compressed [id\|path]` | Restore a compressed session and reopen it. With no argument, restores the current session's `.gz`, or this project's newest compressed session if there is none. Accepts a session id (exact or prefix) or a file path. |
 
 ## Behaviour notes
 
