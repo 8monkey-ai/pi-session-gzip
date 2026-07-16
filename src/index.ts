@@ -57,10 +57,12 @@ async function decompressAndResume(gzPath: string, ctx: ExtensionCommandContext)
 		return;
 	}
 
-	const { cancelled } = await ctx.switchSession(restored);
-	if (cancelled) {
-		ctx.ui.notify("Resume cancelled.", "info");
-		return;
-	}
-	ctx.ui.notify(`Restored ${restored.split("/").pop()}.`, "info");
+	// After a successful switch the outer ctx is stale; notify via withSession's
+	// fresh ctx. On cancel no replacement happened, so the outer ctx is still valid.
+	const { cancelled } = await ctx.switchSession(restored, {
+		withSession: async (newCtx) => {
+			newCtx.ui.notify(`Restored ${restored.split("/").pop()}.`, "info");
+		},
+	});
+	if (cancelled) ctx.ui.notify("Resume cancelled.", "info");
 }
