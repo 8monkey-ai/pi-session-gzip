@@ -27,6 +27,7 @@ export default function (pi: ExtensionAPI) {
 			if (arg) {
 				const gzPath = resolveGzPath(arg, sessionDir);
 				if (gzPath) await decompressAndResume(gzPath, ctx);
+				else ctx.ui.notify(`No compressed session matching "${arg}".`, "info");
 				return;
 			}
 
