@@ -31,8 +31,6 @@ export default function (pi: ExtensionAPI) {
 			}
 
 			const gzPath = findRestorableGz(ctx, sessionDir);
-			// Every terminating branch must notify: pi-acp forwards notify as the
-			// ack the server ends the turn on, so a silent return hangs the resume.
 			if (!gzPath) {
 				ctx.ui.notify("No compressed session to restore.", "info");
 				return;
