@@ -5,11 +5,11 @@ export const GZ_SUFFIX = ".gz";
 
 // Write via a temp sibling + fsync + atomic rename so readers never observe a
 // half-written file, even across a crash.
-function writeFileDurable(targetPath: string, data: Buffer | string): void {
+function writeFileDurable(targetPath: string, data: Buffer): void {
 	const tmpPath = `${targetPath}.tmp-${process.pid}`;
 	const fd = openSync(tmpPath, "w");
 	try {
-		writeSync(fd, data as Buffer);
+		writeSync(fd, data);
 		fsyncSync(fd);
 	} finally {
 		closeSync(fd);
@@ -44,7 +44,7 @@ export function compressFile(jsonlPath: string): string | null {
 	const stub = [lines[0]];
 	const info = lines.findLast((line) => entryType(line) === "session_info");
 	if (info) stub.push(info);
-	writeFileDurable(jsonlPath, stub.join("\n") + "\n");
+	writeFileDurable(jsonlPath, Buffer.from(stub.join("\n") + "\n"));
 	return gzPath;
 }
 
