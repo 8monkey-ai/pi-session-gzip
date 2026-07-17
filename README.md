@@ -27,7 +27,7 @@ pi install npm:@8monkey/pi-session-gzip
 
 Pi reads the session file at startup, before extensions load, so a cold `pi --session <stub>` would open the stub without its history. The package ships a tiny shim that restores the archive first and then execs `pi`:
 
-```
+```text
 shell/pi-gz
 ```
 
