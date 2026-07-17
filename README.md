@@ -6,8 +6,8 @@ Built for anyone whose `~/.pi/agent/sessions/` has grown large and wants closed 
 
 ## How it works
 
-- **Compress on quit.** Quitting Pi archives `session.jsonl` to `session.jsonl.gz` and rewrites the `.jsonl` as a stub: the session header plus the latest session name. Listings keep working; disk usage drops to the compressed size.
-- **Restore on resume.** Any in-app resume or session switch (`/resume`, pi-acp's `session/load` into a running pi) fires before Pi reads the file, and the extension restores the full history first. `/resume-compressed` does the same on demand.
+- **Compress on quit.** Closed sessions take a fraction of their disk space, yet still show up in every session list with their name and id — nothing disappears.
+- **Restore on resume.** Resume any session as usual and its full history is back before Pi reads it. No extra commands, no separate archive to manage.
 
 Zero runtime dependencies. Pi loads the TypeScript directly, so there's no build step. Runs under Node or Bun.
 
