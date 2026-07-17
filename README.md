@@ -1,6 +1,6 @@
 # pi-session-gzip
 
-Gzip Pi session files at rest. When a session closes, its full history is compressed to a `.jsonl.gz` file and the `.jsonl` is shrunk to a small stub (session header + name). The stub keeps the session visible to anything that lists sessions — including [pi-acp](https://github.com/nikvdp/pi-acp)'s `session/list` — while the history sits compressed. Resuming restores the full file transparently.
+Gzip Pi session files at rest. When a session closes, its full history is compressed to a `.jsonl.gz` file and the `.jsonl` is shrunk to a small stub (session header + name). The stub keeps the session visible to anything that lists sessions while the history sits compressed. Resuming restores the full file transparently.
 
 Built for anyone whose `~/.pi/agent/sessions/` has grown large and wants closed sessions to sit compressed without losing the ability to list or reopen them.
 
