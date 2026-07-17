@@ -1,13 +1,4 @@
-import {
-	closeSync,
-	existsSync,
-	fsyncSync,
-	openSync,
-	readFileSync,
-	renameSync,
-	rmSync,
-	writeSync,
-} from "node:fs";
+import { closeSync, existsSync, fsyncSync, openSync, readFileSync, renameSync, writeSync } from "node:fs";
 import { gunzipSync, gzipSync } from "node:zlib";
 
 export const GZ_SUFFIX = ".gz";
@@ -26,26 +17,37 @@ function writeFileDurable(targetPath: string, data: Buffer): void {
 	renameSync(tmpPath, targetPath);
 }
 
-// Compress `jsonlPath` to a `.gz` file beside it and remove the plain file. The .gz
-// is durably in place before the plain file is unlinked, so a crash leaves at
-// least one intact copy. Returns the .gz path, or null when there is nothing to
-// compress (a session quit before it was ever persisted, or an empty file).
-export function gzipFile(jsonlPath: string): string | null {
+function entryType(line: string) {
+	try {
+		return (JSON.parse(line) as { type?: string }).type;
+	} catch {
+		return undefined;
+	}
+}
+
+// Archive to `.gz` and shrink the plain file to a stub (header + latest
+// session_info) so session listings keep working. Returns null when there are
+// no messages — re-compressing a stub would clobber the archive.
+export function compressFile(jsonlPath: string): string | null {
 	if (!existsSync(jsonlPath)) return null;
 
-	const plain = readFileSync(jsonlPath);
-	if (plain.length === 0) return null;
+	const plain = readFileSync(jsonlPath, "utf8");
+	const lines = plain.split("\n").filter((line) => line);
+	if (lines.length === 0 || entryType(lines[0]) !== "session") return null;
+	if (!lines.some((line) => entryType(line) === "message")) return null;
 
 	const gzPath = `${jsonlPath}${GZ_SUFFIX}`;
 	writeFileDurable(gzPath, gzipSync(plain));
 
-	rmSync(jsonlPath, { force: true });
+	const stub = [lines[0]];
+	const info = lines.findLast((line) => entryType(line) === "session_info");
+	if (info) stub.push(info);
+	writeFileDurable(jsonlPath, Buffer.from(stub.join("\n") + "\n"));
 	return gzPath;
 }
 
-// Decompress `gzPath` back to its `.jsonl`, leaving the `.gz` in place. Returns
-// the restored path. Throws (ENOENT) if the .gz is missing.
-export function gunzipFile(gzPath: string): string {
+// Restore the archived history over the `.jsonl`; throws if the .gz is missing.
+export function restoreFile(gzPath: string): string {
 	const jsonlPath = gzPath.slice(0, -GZ_SUFFIX.length);
 	writeFileDurable(jsonlPath, gunzipSync(readFileSync(gzPath)));
 	return jsonlPath;

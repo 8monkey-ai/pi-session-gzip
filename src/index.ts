@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
-import { GZ_SUFFIX, gunzipFile, gzipFile } from "./gzip.ts";
+import { compressFile, GZ_SUFFIX, restoreFile } from "./gzip.ts";
 import { listCompressedSessions, resolveGzPath } from "./session-paths.ts";
 
 export default function (pi: ExtensionAPI) {
@@ -13,20 +13,31 @@ export default function (pi: ExtensionAPI) {
 		const file = ctx.sessionManager.getSessionFile();
 		if (!file) return;
 
-		const gz = gzipFile(file);
+		const gz = compressFile(file);
 		if (gz && ctx.hasUI) {
 			ctx.ui.notify(`Compressed session to ${gz.split("/").pop()}.`, "info");
 		}
 	});
 
+	// Fires before pi reads the target, so restore is invisible to resume/switch.
+	pi.on("session_before_switch", async (event) => {
+		const target = event.targetSessionFile;
+		if (!target || !existsSync(`${target}${GZ_SUFFIX}`)) return;
+		try {
+			restoreFile(`${target}${GZ_SUFFIX}`);
+		} catch {
+			// Pi loads whatever is on disk.
+		}
+	});
+
 	pi.registerCommand("resume-compressed", {
-		description: "Decompress a compressed session (.jsonl.gz) and resume it",
+		description: "Restore a compressed session (.jsonl.gz) and resume it",
 		handler: async (args, ctx) => {
 			const sessionDir = ctx.sessionManager.getSessionDir();
 			const arg = args.trim();
 			if (arg) {
 				const gzPath = resolveGzPath(arg, sessionDir);
-				if (gzPath) await decompressAndResume(gzPath, ctx);
+				if (gzPath) await restoreAndResume(gzPath, ctx);
 				else ctx.ui.notify(`No compressed session matching "${arg}".`, "info");
 				return;
 			}
@@ -36,7 +47,7 @@ export default function (pi: ExtensionAPI) {
 				ctx.ui.notify("No compressed session to restore.", "info");
 				return;
 			}
-			await decompressAndResume(gzPath, ctx);
+			await restoreAndResume(gzPath, ctx);
 		},
 	});
 }
@@ -49,12 +60,12 @@ function findRestorableGz(ctx: ExtensionCommandContext, sessionDir: string) {
 	return listCompressedSessions(sessionDir)[0]?.gzPath;
 }
 
-async function decompressAndResume(gzPath: string, ctx: ExtensionCommandContext) {
+async function restoreAndResume(gzPath: string, ctx: ExtensionCommandContext) {
 	let restored: string;
 	try {
-		restored = gunzipFile(gzPath);
+		restored = restoreFile(gzPath);
 	} catch (err) {
-		ctx.ui.notify(`Failed to decompress session: ${(err as Error).message}.`, "warning");
+		ctx.ui.notify(`Failed to restore session: ${(err as Error).message}.`, "warning");
 		return;
 	}
 
@@ -62,7 +73,7 @@ async function decompressAndResume(gzPath: string, ctx: ExtensionCommandContext)
 	// fresh ctx. On cancel no replacement happened, so the outer ctx is still valid.
 	const { cancelled } = await ctx.switchSession(restored, {
 		withSession: async (newCtx) => {
-			newCtx.ui.notify(`Restored ${restored.split("/").pop()}.`, "info");
+			newCtx.ui.notify(`Resumed ${restored.split("/").pop()}.`, "info");
 		},
 	});
 	if (cancelled) ctx.ui.notify("Resume cancelled.", "info");

@@ -1,0 +1,11 @@
+#!/bin/sh
+# pi shim: pi reads --session before extensions load, so restore the .gz first.
+# Point PI_ACP_PI_COMMAND (or PATH) here.
+prev=""
+for a in "$@"; do
+	if [ "$prev" = "--session" ] && [ -e "$a.gz" ]; then
+		gzip -dc "$a.gz" >"$a.tmp-$$" && mv "$a.tmp-$$" "$a"
+	fi
+	prev="$a"
+done
+exec pi "$@"
