@@ -1,0 +1,15 @@
+#!/bin/sh
+# pi shim: restore a compressed session before pi reads it at startup, then
+# exec the real pi. Point PI_ACP_PI_COMMAND (or PATH) at this script.
+# Restores only when the target is missing or is a stub (no message entries),
+# mirroring the extension's divergence guard.
+prev=""
+for a in "$@"; do
+	if [ "$prev" = "--session" ] && [ -e "$a.gz" ]; then
+		if [ ! -e "$a" ] || ! grep -q '"type":"message"' "$a"; then
+			gzip -dc "$a.gz" >"$a.tmp-$$" && mv "$a.tmp-$$" "$a"
+		fi
+	fi
+	prev="$a"
+done
+exec pi "$@"
