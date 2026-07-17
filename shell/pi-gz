@@ -1,6 +1,6 @@
 #!/bin/sh
-# pi shim: restore a compressed session before pi reads it at startup, then
-# exec the real pi. Point PI_ACP_PI_COMMAND (or PATH) at this script.
+# pi shim: pi reads --session before extensions load, so restore the .gz first.
+# Point PI_ACP_PI_COMMAND (or PATH) here.
 prev=""
 for a in "$@"; do
 	if [ "$prev" = "--session" ] && [ -e "$a.gz" ]; then

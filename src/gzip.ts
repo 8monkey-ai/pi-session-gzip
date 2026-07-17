@@ -25,11 +25,9 @@ function entryType(line: string) {
 	}
 }
 
-// Compress `jsonlPath` to a `.gz` beside it and shrink the plain file to a stub
-// (session header + latest session_info) so session listings still see the
-// session's id, cwd, and title. Returns the .gz path, or null when there is
-// nothing to compress (no session header, or no messages — re-compressing a
-// stub would clobber the archive).
+// Archive to `.gz` and shrink the plain file to a stub (header + latest
+// session_info) so session listings keep working. Returns null when there are
+// no messages — re-compressing a stub would clobber the archive.
 export function compressFile(jsonlPath: string): string | null {
 	if (!existsSync(jsonlPath)) return null;
 
@@ -48,8 +46,7 @@ export function compressFile(jsonlPath: string): string | null {
 	return gzPath;
 }
 
-// Restore the full history from `gzPath` over its `.jsonl`. Returns the
-// restored path. Throws (ENOENT) if the .gz is missing.
+// Restore the archived history over the `.jsonl`; throws if the .gz is missing.
 export function restoreFile(gzPath: string): string {
 	const jsonlPath = gzPath.slice(0, -GZ_SUFFIX.length);
 	writeFileDurable(jsonlPath, gunzipSync(readFileSync(gzPath)));

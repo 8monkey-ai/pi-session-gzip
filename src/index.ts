@@ -19,14 +19,14 @@ export default function (pi: ExtensionAPI) {
 		}
 	});
 
-	// Restore stubbed sessions before pi reads them on in-app resume/switch.
+	// Fires before pi reads the target, so restore is invisible to resume/switch.
 	pi.on("session_before_switch", async (event) => {
 		const target = event.targetSessionFile;
 		if (!target || !existsSync(`${target}${GZ_SUFFIX}`)) return;
 		try {
 			restoreFile(`${target}${GZ_SUFFIX}`);
 		} catch {
-			// Leave the target as-is; pi will load whatever is on disk.
+			// Pi loads whatever is on disk.
 		}
 	});
 
