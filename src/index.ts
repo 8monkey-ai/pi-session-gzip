@@ -14,10 +14,7 @@ export default function (pi: ExtensionAPI) {
 		if (!file) return;
 
 		const gz = compressFile(file);
-		if (!ctx.hasUI) return;
-		if (gz === "conflict") {
-			ctx.ui.notify(`Not compressed: ${file.split("/").pop()} diverged from its .gz archive.`, "warning");
-		} else if (gz) {
+		if (gz && ctx.hasUI) {
 			ctx.ui.notify(`Compressed session to ${gz.split("/").pop()}.`, "info");
 		}
 	});
@@ -64,23 +61,19 @@ function findRestorableGz(ctx: ExtensionCommandContext, sessionDir: string) {
 }
 
 async function restoreAndResume(gzPath: string, ctx: ExtensionCommandContext) {
-	const jsonlPath = gzPath.slice(0, -GZ_SUFFIX.length);
-	let outcome: "restored" | "diverged";
+	let restored: string;
 	try {
-		outcome = restoreFile(gzPath);
+		restored = restoreFile(gzPath);
 	} catch (err) {
 		ctx.ui.notify(`Failed to restore session: ${(err as Error).message}.`, "warning");
 		return;
 	}
-	if (outcome === "diverged") {
-		ctx.ui.notify(`${jsonlPath.split("/").pop()} diverged from its .gz archive; resuming the file as-is.`, "warning");
-	}
 
 	// After a successful switch the outer ctx is stale; notify via withSession's
 	// fresh ctx. On cancel no replacement happened, so the outer ctx is still valid.
-	const { cancelled } = await ctx.switchSession(jsonlPath, {
+	const { cancelled } = await ctx.switchSession(restored, {
 		withSession: async (newCtx) => {
-			newCtx.ui.notify(`Resumed ${jsonlPath.split("/").pop()}.`, "info");
+			newCtx.ui.notify(`Resumed ${restored.split("/").pop()}.`, "info");
 		},
 	});
 	if (cancelled) ctx.ui.notify("Resume cancelled.", "info");

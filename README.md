@@ -8,7 +8,6 @@ Built for anyone whose `~/.pi/agent/sessions/` has grown large and wants closed 
 
 - **Compress on quit.** Quitting Pi archives `session.jsonl` to `session.jsonl.gz` and rewrites the `.jsonl` as a stub: the session header plus the latest session name. Listings keep working; disk usage drops to the compressed size.
 - **Restore on resume.** Any in-app resume or session switch (`/resume`, pi-acp's `session/load` into a running pi) fires before Pi reads the file, and the extension restores the full history first. `/resume-compressed` does the same on demand.
-- **Never lose data.** Restore only overwrites a pristine stub (or an identical file). If a stub accumulated new messages without being restored first — e.g. a Pi without this extension appended to it — the file is left untouched and the conflict is reported instead.
 
 Zero runtime dependencies. Pi loads the TypeScript directly, so there's no build step. Runs under Node or Bun.
 
@@ -38,7 +37,7 @@ Point whatever spawns pi at it. For pi-acp, set the env var it already supports:
 export PI_ACP_PI_COMMAND=~/.pi/agent/npm/node_modules/@8monkey/pi-session-gzip/shell/pi-gz
 ```
 
-The shim only acts on `--session <path>` when `<path>.gz` exists and the file is missing or still a stub; every other invocation passes through unchanged.
+The shim only acts on `--session <path>` when `<path>.gz` exists; every other invocation passes through unchanged.
 
 ## Behaviour notes
 

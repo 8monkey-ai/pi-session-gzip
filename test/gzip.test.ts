@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { appendFileSync, existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
 import { compressFile, GZ_SUFFIX, restoreFile } from "../src/gzip.ts";
@@ -25,7 +25,7 @@ test("compress archives the full history and leaves a header+info stub", () => {
 		assert.equal(readFileSync(jsonl, "utf8"), `${HEADER}\n${INFO}\n`);
 		assert.ok(!readdirSync(dir).some((f) => f.includes(".tmp-")), "no temp files left behind");
 
-		assert.equal(restoreFile(gz as string), "restored");
+		assert.equal(restoreFile(gz as string), jsonl);
 		assert.equal(readFileSync(jsonl, "utf8"), SAMPLE);
 	});
 });
@@ -37,27 +37,13 @@ test("compress and restore are idempotent", () => {
 
 		const gz = compressFile(jsonl) as string;
 		assert.equal(compressFile(jsonl), null, "stub has no messages, nothing to compress");
-		assert.equal(restoreFile(gz), "restored");
-		assert.equal(restoreFile(gz), "restored", "restoring an identical file is a no-op");
+		restoreFile(gz);
+		restoreFile(gz);
 		assert.equal(readFileSync(jsonl, "utf8"), SAMPLE);
 	});
 });
 
-test("restore refuses to overwrite a diverged file", () => {
-	withTmpDir((dir) => {
-		const jsonl = join(dir, "s.jsonl");
-		writeFileSync(jsonl, SAMPLE);
-		const gz = compressFile(jsonl) as string;
-
-		const newMessage = JSON.stringify({ type: "message", id: "m3", message: { role: "user", content: "more" } });
-		appendFileSync(jsonl, newMessage + "\n");
-
-		assert.equal(restoreFile(gz), "diverged");
-		assert.ok(readFileSync(jsonl, "utf8").includes("more"), "diverged file untouched");
-	});
-});
-
-test("compress extends the archive when the restored session grew", () => {
+test("compress replaces the archive when the restored session grew", () => {
 	withTmpDir((dir) => {
 		const jsonl = join(dir, "s.jsonl");
 		writeFileSync(jsonl, SAMPLE);
@@ -68,21 +54,8 @@ test("compress extends the archive when the restored session grew", () => {
 		writeFileSync(jsonl, grown);
 
 		assert.equal(compressFile(jsonl), gz);
-		assert.equal(restoreFile(gz), "restored");
+		restoreFile(gz);
 		assert.equal(readFileSync(jsonl, "utf8"), grown);
-	});
-});
-
-test("compress reports a conflict when a diverged stub was chatted on", () => {
-	withTmpDir((dir) => {
-		const jsonl = join(dir, "s.jsonl");
-		writeFileSync(jsonl, SAMPLE);
-		compressFile(jsonl);
-
-		// A shimless pi appends to the stub without restoring first.
-		appendFileSync(jsonl, JSON.stringify({ type: "message", id: "m9", message: { role: "user", content: "lost?" } }) + "\n");
-
-		assert.equal(compressFile(jsonl), "conflict");
 	});
 });
 

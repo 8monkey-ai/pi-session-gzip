@@ -25,33 +25,20 @@ function entryType(line: string) {
 	}
 }
 
-function hasMessageEntries(jsonl: string) {
-	return jsonl.split("\n").some((line) => entryType(line) === "message");
-}
-
 // Compress `jsonlPath` to a `.gz` beside it and shrink the plain file to a stub
 // (session header + latest session_info) so session listings still see the
-// session's id, cwd, and title. Returns the .gz path, null when there is
-// nothing to compress (no session header or no messages — re-compressing a
-// stub would clobber the archive), or "conflict" when the existing .gz holds
-// history the plain file lacks (a stub was chatted on without being restored).
-export function compressFile(jsonlPath: string): string | "conflict" | null {
+// session's id, cwd, and title. Returns the .gz path, or null when there is
+// nothing to compress (no session header, or no messages — re-compressing a
+// stub would clobber the archive).
+export function compressFile(jsonlPath: string): string | null {
 	if (!existsSync(jsonlPath)) return null;
 
 	const plain = readFileSync(jsonlPath, "utf8");
 	const lines = plain.split("\n").filter((line) => line);
 	if (lines.length === 0 || entryType(lines[0]) !== "session") return null;
-	if (!hasMessageEntries(plain)) return null;
+	if (!lines.some((line) => entryType(line) === "message")) return null;
 
 	const gzPath = `${jsonlPath}${GZ_SUFFIX}`;
-	if (existsSync(gzPath)) {
-		try {
-			const archived = gunzipSync(readFileSync(gzPath)).toString("utf8");
-			if (!plain.startsWith(archived)) return "conflict";
-		} catch {
-			return "conflict";
-		}
-	}
 	writeFileDurable(gzPath, gzipSync(plain));
 
 	const stub = [lines[0]];
@@ -61,18 +48,10 @@ export function compressFile(jsonlPath: string): string | "conflict" | null {
 	return gzPath;
 }
 
-// Restore the full history from `gzPath` over its `.jsonl`. Overwrites only a
-// missing file, a stub (no message entries), or an identical copy; a file with
-// messages the archive may lack is left untouched ("diverged"). Throws
-// (ENOENT) if the .gz is missing.
-export function restoreFile(gzPath: string): "restored" | "diverged" {
+// Restore the full history from `gzPath` over its `.jsonl`. Returns the
+// restored path. Throws (ENOENT) if the .gz is missing.
+export function restoreFile(gzPath: string): string {
 	const jsonlPath = gzPath.slice(0, -GZ_SUFFIX.length);
-	const full = gunzipSync(readFileSync(gzPath));
-
-	if (existsSync(jsonlPath)) {
-		const plain = readFileSync(jsonlPath, "utf8");
-		if (hasMessageEntries(plain) && plain !== full.toString("utf8")) return "diverged";
-	}
-	writeFileDurable(jsonlPath, full);
-	return "restored";
+	writeFileDurable(jsonlPath, gunzipSync(readFileSync(gzPath)));
+	return jsonlPath;
 }
