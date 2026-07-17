@@ -6,8 +6,8 @@ Built for anyone whose `~/.pi/agent/sessions/` has grown large and wants closed 
 
 ## How it works
 
-- **Compress on quit.** Closed sessions take a fraction of their disk space, yet still show up in every session list with their name and id — nothing disappears.
-- **Restore on resume.** Resume any session as usual and its full history is back before Pi reads it. No extra commands, no separate archive to manage.
+- **Compress on quit.** Closed sessions take a fraction of their disk space, yet still show up in every session list with their name and id.
+- **Restore on resume.** Resume any session as usual and its full history is back before Pi reads it, without extra commands or a separate archive to manage.
 
 Zero runtime dependencies. Pi loads the TypeScript directly, so there's no build step. Runs under Node or Bun.
 
@@ -37,14 +37,14 @@ Point whatever spawns pi at it. For pi-acp, set the env var it already supports:
 export PI_ACP_PI_COMMAND=~/.pi/agent/npm/node_modules/@8monkey/pi-session-gzip/shell/pi-gz
 ```
 
-The shim only acts on `--session <path>` when `<path>.gz` exists; every other invocation passes through unchanged.
+The shim only acts on `--session <path>` when `<path>.gz` exists. Every other invocation passes through unchanged.
 
 ## Behaviour notes
 
-- Compresses on quit only; live sessions, reloads, and switches are left untouched.
-- Compress and restore are idempotent — running either twice is a no-op.
+- Compresses on quit only. Live sessions, reloads, and switches are left untouched.
+- Compress and restore are idempotent, so running either twice is a no-op.
 - Ephemeral (`--no-session`) and message-less sessions are skipped.
-- The `.gz` sits beside the stub at the same path (`session.jsonl` + `session.jsonl.gz`); the sessions layout is never reorganized.
+- The `.gz` sits beside the stub at the same path (`session.jsonl` + `session.jsonl.gz`). The sessions layout is never reorganized.
 
 ## Development
 
